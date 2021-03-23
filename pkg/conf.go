@@ -1,4 +1,4 @@
-package phoner
+package conf
 
 import (
 	"io/ioutil"
@@ -18,7 +18,7 @@ type Config struct {
 	InternationalDialingPrefix string `yaml:"international_dialing_prefix"`
 }
 
-func (a Config) load() Config {
+func Load() Config {
 	filename, _ := filepath.Abs("data/phone/country.yaml")
 	yamlFile, err := ioutil.ReadFile(filename)
 

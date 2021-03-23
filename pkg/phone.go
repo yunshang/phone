@@ -1,4 +1,4 @@
-package phoner
+package phone
 
 import "regexp"
 
