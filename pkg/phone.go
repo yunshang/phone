@@ -1,6 +1,9 @@
-package phone
+package pkg
 
-import "regexp"
+import (
+	"phone/country"
+	"regexp"
+)
 
 const COMMON_EXTENSIONS = `/[ ]*(ext|ex|x|xt|#|:)+[^0-9]*\(*([-0-9]{1,})\)*#?$/i`
 const COMMON_EXTRAS = `/(\(0\)|[^0-9+]|^\+?00?)/`
@@ -26,7 +29,8 @@ func parse(s string) bool {
 	if s == "" {
 		return false
 	}
-	sub, extension := extractExtension(s)
+	// sub, extension := extractExtension(s)
+	sub, _ := extractExtension(s)
 	sub = normalize(sub)
 	return true
 }
@@ -49,4 +53,14 @@ func normalize(stringWithNumber string) string {
 		s = COMMON_EXTRAS_REPLACEMENTS[m]
 	}
 	return s
+}
+
+func detectCountry(s string) (c *country.Country) {
+	for k, v := range country.Countries {
+		if v.CountryCodeRegexp.MatchString(s) {
+			c = v
+		}
+	}
+
+	return c
 }

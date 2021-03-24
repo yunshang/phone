@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-
-	"phone/pkg/conf"
+	"phone/country"
 )
 
 func main() {
-	c := conf.Load()
+	c := country.Load()
 	fmt.Printf("hello world %v", c)
 }
