@@ -72,14 +72,17 @@ func (c Country) Formats() (reg map[string]*regexp.Regexp) {
 	return reg
 }
 
-// def self.formats(country)
-// area_code_regexp = country.area_code
-// number_regex     = "([0-9]{1,#{country.max_num_length}})$".freeze
+func (c Country) DetectFormat(string_with_number string) string {
+	fs := c.Formats
+	var arr []string
+	for k, v := range fs {
+		if v.CountryCodeRegexp.MatchString(string_with_number) {
+			arr = append(arr, k)
+		}
+	}
+	if len(arr) > 1 {
+		return "reall_short"
+	}
 
-// {
-//   # 047451588, 013668734
-//   :short => Regexp.new("^0?(#{area_code_regexp})#{number_regex}"),
-//   # 451588
-//   :really_short => Regexp.new("^#{number_regex}")
-// }
-// end
+	return arr[0]
+}
