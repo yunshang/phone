@@ -46,8 +46,8 @@ func Load() map[string]Country {
 }
 
 func detectCountry(s string) (c Country) {
-	for k, v := range Countries {
-		r := v.CountryCodeRegexp
+	for _, v := range Countries {
+		r := v.CountryCodeRegexp()
 		if r.MatchString(s) {
 			c = v
 		}
@@ -70,29 +70,27 @@ func FindByCountryIsoCode(isocode string) (c Country) {
 
 func (c Country) CountryCodeRegexp() *regexp.Regexp {
 	exp := fmt.Sprintf("/^[+]%s/", c.CountryCode)
-	re := regexp.MustCompile(exp)
+	re, _ := regexp.Compile(exp)
 
 	return re
 }
 
 func (c Country) Formats() (*regexp.Regexp, *regexp.Regexp) {
-	number_regex := fmt.Sprintf("([0-9]{1,%d})$", c.MaxNumLength)
-	short := regexp.MustCompile(fmt.Sprintf("/^0?(%s)%s/", c.AreaCode, number_regex))
-	really_short := regexp.MustCompile(fmt.Sprintf("/^%s", number_regex))
-	// reg["short"] := short
-	// reg["really_short"] = really_short
+	numberRegex := fmt.Sprintf("([0-9]{1,%s})$", c.MaxNumLength)
+	short := regexp.MustCompile(fmt.Sprintf("/^0?(%s)%s/", c.AreaCode, numberRegex))
+	reallyShort := regexp.MustCompile(fmt.Sprintf("/^%s", numberRegex))
 
-	return short, really_short
+	return short, reallyShort
 }
 
-func (c Country) DetectFormat(string_with_number string) string {
-	sh, reall := c.Formats()
+func (c Country) DetectFormat(stringWithNumber string) string {
+	sh, real := c.Formats()
 	var arr []string
 
-	if sh.MatchString(string_with_number) {
+	if sh.MatchString(stringWithNumber) {
 		arr = append(arr, "short")
 	}
-	if reall.MatchString(string_with_number) {
+	if real.MatchString(stringWithNumber) {
 		arr = append(arr, "reall_short")
 	}
 	if len(arr) > 1 {

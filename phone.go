@@ -20,16 +20,15 @@ type Phone struct {
 	N1Length           string
 }
 
-func (p Phone) Valid(s string) {
-
+func (p Phone) Valid(s string) bool {
+	return parse(s)
 }
 
 func parse(s string) bool {
 	if s == "" {
 		return false
 	}
-	// sub, extension := extractExtension(s)
-	sub, _ := extractExtension(s)
+	sub, extension := extractExtension(s)
 	sub = normalize(sub)
 	return true
 }
