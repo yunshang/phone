@@ -1,7 +1,6 @@
-package pkg
+package phone
 
 import (
-	"phone/country"
 	"regexp"
 )
 
@@ -53,14 +52,4 @@ func normalize(stringWithNumber string) string {
 		s = COMMON_EXTRAS_REPLACEMENTS[m]
 	}
 	return s
-}
-
-func detectCountry(s string) (c *country.Country) {
-	for k, v := range country.Countries {
-		if v.CountryCodeRegexp.MatchString(s) {
-			c = v
-		}
-	}
-
-	return c
 }

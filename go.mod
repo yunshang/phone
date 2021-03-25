@@ -1,4 +1,4 @@
-module phone
+module phoner
 
 go 1.15
 
