@@ -45,11 +45,11 @@ func Load() map[string]Country {
 	return c
 }
 
-func detectCountry(s string) (c Country) {
+func detectCountry(s string) (c *Country) {
 	for _, v := range Countries {
 		r := v.CountryCodeRegexp()
 		if r.MatchString(s) {
-			c = v
+			c = &v
 		}
 	}
 
@@ -96,11 +96,14 @@ func (c Country) DetectFormat(stringWithNumber string) string {
 	if len(arr) > 1 {
 		return "reall_short"
 	}
+	if len(arr) == 0 {
+		return ""
+	}
 
 	return arr[0]
 }
 
-func New(args ...string) (input Country, err error) {
+func New(args ...string) (input *Country, err error) {
 	input = ArgsToCountry(args...)
 
 	if strings.Trim(input.Number, "\t \n") == "" {
@@ -116,8 +119,8 @@ func New(args ...string) (input Country, err error) {
 	return input, err
 }
 
-func ArgsToCountry(args ...string) Country {
-	c := Country{}
+func ArgsToCountry(args ...string) *Country {
+	c := &Country{}
 	switch len(args) {
 	case 1:
 		c.Number = args[0]
