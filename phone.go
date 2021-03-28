@@ -8,9 +8,10 @@ import (
 
 const COMMON_EXTENSIONS = `(ext|ex|x|xt|#|:)+[^0-9]*([-0-9]{1,})*#?$`
 const COMMON_NUMBER = `[0-9]{1,}$`
-const COMMON_EXTRAS = `/(\(0\)|[^0-9+]|^\+?00?)/`
+const COMMON_EXTRAS = `(\(0\)|[^0-9+]|^\+?00?)`
 
 var COMMON_EXTRAS_REPLACEMENTS = map[string]string{
+	"(0)": "+",
 	"00":  "+",
 	"+00": "+",
 	"+0":  "+",
@@ -23,19 +24,19 @@ type Phone struct {
 	N1Length           string
 }
 
-func (p Phone) Valid(s string) bool {
-	_, err := parse(s)
+func Valid(s string) bool {
+	_, err := Parse(s)
 	if err != nil {
 		return false
 	}
 	return true
 }
 
-func parse(s string) (*Country, error) {
+func Parse(s string) (*Country, error) {
 	if s == "" {
 		return nil, nil
 	}
-	sub, _ := extractExtension(s)
+	sub, e := extractExtension(s)
 	sub = normalize(sub)
 	args, err := SplitToParts(sub)
 	if err != nil {
@@ -45,6 +46,7 @@ func parse(s string) (*Country, error) {
 	if err != nil {
 		return nil, err
 	}
+	c.Extension = e
 	return c, nil
 }
 
@@ -56,7 +58,7 @@ func extractExtension(s string) (string, string) {
 		_s := re.FindString(subbed)
 		return s, _s
 	} else {
-		return subbed, ""
+		return s, ""
 	}
 }
 
@@ -66,15 +68,15 @@ func normalize(stringWithNumber string) string {
 	var s string
 	for _, m := range match {
 		s = COMMON_EXTRAS_REPLACEMENTS[m]
+		stringWithNumber = re.ReplaceAllString(stringWithNumber, s)
 	}
-	return s
+	return stringWithNumber
 }
 
 func SplitToParts(s string) (args []string, err error) {
 	c := detectCountry(s)
+	fmt.Printf("country is %v \n", c)
 	if c != nil {
-		//countryCode := c.CountryCode
-		//string = string.gsub(country.country_code_regexp, "0")
 		re := c.CountryCodeRegexp()
 		s = re.ReplaceAllString(s, "0")
 	}
@@ -89,8 +91,6 @@ func SplitToParts(s string) (args []string, err error) {
 	if format == "" {
 		return nil, err
 	}
-
-	//parts = string.match formats(country)[format]
 	sh, real := c.Formats()
 
 	switch format {
@@ -101,7 +101,7 @@ func SplitToParts(s string) (args []string, err error) {
 		args = append(args, c.CountryCode)
 	case "really_short":
 		re := real.FindAllString(s, -1)
-		args = append(args, re[1])
+		args = append(args, re[len(re)-1])
 		args = append(args, c.AreaCode)
 		args = append(args, c.CountryCode)
 	}
