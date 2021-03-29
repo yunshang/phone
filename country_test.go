@@ -21,8 +21,10 @@ func TestValid(t *testing.T) {
 
 func TestParse(t *testing.T) {
 	c, err := Parse("+385915125486")
-	fmt.Printf("phone is %v", c)
-	fmt.Printf("error is %v", err)
+	s := c.ToS()
+	fmt.Printf("phone is %v \n", c)
+	fmt.Printf("error is %v \n", err)
+	fmt.Printf("phone string %v \n", s)
 }
 
 func TestNormalize(t *testing.T) {

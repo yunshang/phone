@@ -21,6 +21,10 @@ type Country struct {
 	NationalDialingPrefix      string `yaml:"national_dialing_prefix"`
 	InternationalDialingPrefix string `yaml:"international_dialing_prefix"`
 	Extension                  string `yaml:"extension"`
+	DefaultCountryCode         string
+	DefaultAreaCode            string
+	NamedFormats               string
+	N1Length                   string
 }
 
 var Countries map[string]Country
@@ -100,7 +104,7 @@ func (c Country) DetectFormat(stringWithNumber string) string {
 		return "really_short"
 	}
 	if len(arr) == 0 {
-		return ""
+		return "short"
 	}
 
 	return arr[0]

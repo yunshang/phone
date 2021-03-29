@@ -4,11 +4,23 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 )
 
 const COMMON_EXTENSIONS = `(ext|ex|x|xt|#|:)+[^0-9]*([-0-9]{1,})*#?$`
 const COMMON_NUMBER = `[0-9]{1,}$`
 const COMMON_EXTRAS = `(\(0\)|[^0-9+]|^\+?00?)`
+
+var FMTENUM = []string{"default", "default_with_extension", "europe", "us"}
+
+const FORMAT_TOKENS = `(%[caAnflx])`
+
+var namedFormat = map[string]string{
+	"default":                "+%c%a%n",
+	"default_with_extension": "+%c%a%nx%x",
+	"europe":                 "+%c (0) %a %f %l",
+	"us":                     "(%a) %f-%l",
+}
 
 var COMMON_EXTRAS_REPLACEMENTS = map[string]string{
 	"(0)": "+",
@@ -79,6 +91,7 @@ func SplitToParts(s string) (args []string, err error) {
 	if c != nil {
 		re := c.CountryCodeRegexp()
 		s = re.ReplaceAllString(s, "0")
+		c.CountryCode = "+" + c.CountryCode
 	}
 
 	if c == nil {
@@ -91,20 +104,88 @@ func SplitToParts(s string) (args []string, err error) {
 	if format == "" {
 		return nil, err
 	}
-	sh, real := c.Formats()
+	//sh, _ := c.Formats()
 
-	switch format {
-	case "short":
-		p := sh.FindAllString(s, -1)
-		args = append(args, p[2])
-		args = append(args, p[1])
-		args = append(args, c.CountryCode)
-	case "really_short":
-		re := real.FindAllString(s, -1)
-		args = append(args, re[len(re)-1])
-		args = append(args, c.AreaCode)
-		args = append(args, c.CountryCode)
-	}
+	exp := fmt.Sprintf("%s", c.AreaCode)
+	r, _ := regexp.Compile(exp)
+	areaCode := r.FindString(s)
+
+	nExp := fmt.Sprintf("^0*(%s)", c.AreaCode)
+	n, _ := regexp.Compile(nExp)
+	number := n.ReplaceAllString(s, "")
+
+	args = append(args, number)
+	args = append(args, areaCode)
+	args = append(args, c.CountryCode)
 
 	return args, nil
+}
+
+func (c *Country) ToS() string {
+	return c.format("default")
+}
+
+func (c *Country) Number1() string {
+	data := []byte(c.Number)
+	i, err := strconv.Atoi(c.N1Length)
+	if err == nil {
+		fmt.Printf("i=%d, type: %T\n", i, i)
+	}
+	str := string(data[0:i])
+
+	return str
+}
+func (c *Country) Number2() string {
+	data := []byte(c.Number)
+	i, err := strconv.Atoi(c.N1Length)
+	if err == nil {
+		fmt.Printf("i=%d, type: %T\n", i, i)
+	}
+	l := len(data) - i
+	str := string(data[l:])
+
+	return str
+}
+
+//Formats the phone number.
+func (c *Country) format(fmt string) (s string) {
+	if contains(FMTENUM, fmt) {
+		s = c.FormatNumber(namedFormat[fmt])
+	} else {
+		s = c.FormatNumber(fmt)
+	}
+	return s
+}
+
+func (c *Country) FormatNumber(fm string) string {
+	var replacements = map[string]string{
+		"%c": c.CountryCode,
+		"%a": c.AreaCode,
+		"%A": c.AreaCodeLong(),
+		"%n": c.Number,
+		"%f": c.Number1(),
+		"%l": c.Number2(),
+		"%x": c.Extension,
+	}
+	re := regexp.MustCompile(FORMAT_TOKENS)
+	match := re.FindAllString(fm, -1)
+	fmt.Printf("match is %v \n", match)
+	var s string
+	for _, m := range match {
+		_s := replacements[m]
+		fmt.Printf("sss is %s \n", _s)
+		s = fmt.Sprintf("%s%s", s, _s)
+	}
+
+	return s
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
 }
