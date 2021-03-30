@@ -1,7 +1,6 @@
 package phone
 
 import (
-	"errors"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -21,9 +20,6 @@ type Country struct {
 	NationalDialingPrefix      string `yaml:"national_dialing_prefix"`
 	InternationalDialingPrefix string `yaml:"international_dialing_prefix"`
 	Extension                  string `yaml:"extension"`
-	DefaultCountryCode         string
-	DefaultAreaCode            string
-	NamedFormats               string
 	N1Length                   string
 }
 
@@ -49,7 +45,7 @@ func Load() map[string]Country {
 	return c
 }
 
-func detectCountry(s string) (c *Country) {
+func detectCountry(s, defaultCode string) (c *Country) {
 	_c := Country{}
 	for k, v := range Countries {
 		re := fmt.Sprintf("^[+]%s", k)
@@ -58,18 +54,22 @@ func detectCountry(s string) (c *Country) {
 			_c = v
 		}
 	}
+	if _c.CountryCode == "" {
+		_c = Countries[defaultCode]
+	}
 	c = &_c
 
 	return c
 }
-func FindByCountryCode(code string) Country {
-	return Countries[code]
+func FindByCountryCode(code string) *Country {
+	c := Countries[code]
+	return &c
 }
 
-func FindByCountryIsoCode(isocode string) (c Country) {
+func FindByCountryIsoCode(isCcode string) (c *Country) {
 	for _, v := range Countries {
-		if isocode == strings.ToLower(v.Char3Code) {
-			c = v
+		if isCcode == strings.ToLower(v.Char3Code) {
+			c = &v
 		}
 	}
 	return c
@@ -108,52 +108,4 @@ func (c Country) DetectFormat(stringWithNumber string) string {
 	}
 
 	return arr[0]
-}
-
-func New(args []string) (input *Country, err error) {
-	input = ArgsToCountry(args...)
-
-	if strings.Trim(input.Number, "\t \n") == "" {
-		err = errors.New("Must enter number")
-	}
-	if strings.Trim(input.AreaCode, "\t \n") == "" {
-		err = errors.New("Must enter area code or set default")
-	}
-	if strings.Trim(input.CountryCode, "\t \n") == "" {
-		err = errors.New("Must enter country code or set default")
-	}
-	if input.N1Length == "" {
-		input.N1Length = "3"
-	}
-
-	return input, err
-}
-
-func ArgsToCountry(args ...string) *Country {
-	c := &Country{}
-	switch len(args) {
-	case 1:
-		c.Number = args[0]
-	case 2:
-		c.Number = args[0]
-		c.AreaCode = args[1]
-	case 3:
-		c.Number = args[0]
-		c.AreaCode = args[1]
-		c.CountryCode = args[2]
-	case 4:
-		c.Number = args[0]
-		c.AreaCode = args[1]
-		c.CountryCode = args[2]
-		c.Extension = args[3]
-	}
-
-	return c
-}
-
-func (c Country) AreaCodeLong() string {
-	if c.AreaCode != "" {
-		return fmt.Sprintf("0%s", c.AreaCode)
-	}
-	return ""
 }

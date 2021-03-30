@@ -30,11 +30,18 @@ var COMMON_EXTRAS_REPLACEMENTS = map[string]string{
 	"+0":  "+",
 }
 
+var DefaultCountryCode string
+var DefaultAreaCode string
+
 type Phone struct {
-	DefaultCountryCode string
-	DefaultAreaCode    string
 	NamedFormats       string
 	N1Length           string
+	Number             string `yaml:"number"`
+	CountryCode        string `yaml:"country_code"`
+	AreaCode           string `yaml:"area_code"`
+	Extension          string `yaml:"extension"`
+	DefaultCountryCode string
+	DefaultAreaCode    string
 }
 
 func Valid(s string) bool {
@@ -45,7 +52,56 @@ func Valid(s string) bool {
 	return true
 }
 
-func Parse(s string) (*Country, error) {
+func New(args []string) (input *Phone, err error) {
+	input = ArgsToCountry(args...)
+
+	if input.N1Length == "" {
+		input.N1Length = "3"
+	}
+	if input.CountryCode == "" {
+		input.CountryCode = DefaultCountryCode
+	}
+
+	if input.AreaCode == "" {
+		input.AreaCode = DefaultAreaCode
+	}
+
+	if strings.Trim(input.Number, "\t \n") == "" {
+		err = errors.New("Must enter number")
+	}
+	if strings.Trim(input.AreaCode, "\t \n") == "" {
+		err = errors.New("Must enter area code or set default")
+	}
+	if strings.Trim(input.CountryCode, "\t \n") == "" {
+		err = errors.New("Must enter country code or set default")
+	}
+
+	return input, err
+}
+
+func ArgsToCountry(args ...string) *Phone {
+	c := &Phone{}
+	switch len(args) {
+	case 1:
+		c.Number = args[0]
+	case 2:
+		c.Number = args[0]
+		c.AreaCode = args[1]
+	case 3:
+		c.Number = args[0]
+		c.AreaCode = args[1]
+		c.CountryCode = args[2]
+	case 4:
+		c.Number = args[0]
+		c.AreaCode = args[1]
+		c.CountryCode = args[2]
+		c.Extension = args[3]
+	}
+
+	return c
+}
+
+func Parse(s string) (*Phone, error) {
 	if s == "" {
 		return nil, nil
 	}
@@ -87,7 +143,7 @@ func normalize(stringWithNumber string) string {
 }
 
 func SplitToParts(s string) (args []string, err error) {
-	c := detectCountry(s)
+	c := detectCountry(s, DefaultCountryCode)
 	fmt.Printf("country is %v \n", c)
 	if c != nil {
 		re := c.CountryCodeRegexp()
@@ -121,11 +177,11 @@ func SplitToParts(s string) (args []string, err error) {
 	return args, nil
 }
 
-func (c *Country) ToS() string {
+func (c *Phone) ToS() string {
 	return c.format("default")
 }
 
-func (c *Country) Number1() string {
+func (c *Phone) Number1() string {
 	data := []byte(c.Number)
 	i, err := strconv.Atoi(c.N1Length)
 	if err != nil {
@@ -135,7 +191,7 @@ func (c *Country) Number1() string {
 
 	return str
 }
-func (c *Country) Number2() string {
+func (c *Phone) Number2() string {
 	data := []byte(c.Number)
 	i, err := strconv.Atoi(c.N1Length)
 	if err != nil {
@@ -148,7 +204,7 @@ func (c *Country) Number2() string {
 }
 
 //Formats the phone number.
-func (c *Country) format(fmt string) (s string) {
+func (c *Phone) format(fmt string) (s string) {
 	if contains(FMTENUM, fmt) {
 		s = c.FormatNumber(namedFormat[fmt])
 	} else {
@@ -157,7 +213,14 @@ func (c *Country) format(fmt string) (s string) {
 	return s
 }
 
-func (c *Country) FormatNumber(fm string) string {
+func (c Phone) AreaCodeLong() string {
+	if c.AreaCode != "" {
+		return fmt.Sprintf("0%s", c.AreaCode)
+	}
+	return ""
+}
+
+func (c *Phone) FormatNumber(fm string) string {
 	var replacements = map[string]string{
 		"%c": c.CountryCode,
 		"%a": c.AreaCode,
@@ -193,4 +256,14 @@ func contains(s []string, str string) bool {
 	}
 
 	return false
+}
+
+func SetDefaultCountryCode(code string) string {
+	DefaultCountryCode = code
+	return code
+}
+
+func SetDefaultAreaCode(code string) string {
+	DefaultAreaCode = code
+	return code
 }
