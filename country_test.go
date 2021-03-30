@@ -20,7 +20,7 @@ func TestValid(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	c, err := Parse("+385915125486")
+	c, err := Parse("+00385915125486")
 	s := c.ToS()
 	fmt.Printf("phone is %v \n", c)
 	fmt.Printf("error is %v \n", err)
@@ -30,4 +30,27 @@ func TestParse(t *testing.T) {
 func TestNormalize(t *testing.T) {
 	c := normalize("+00385915125486")
 	fmt.Printf("string is %v", c)
+}
+
+func TestNew(t *testing.T) {
+	args := []string{"5125486", "91", "385", "143"}
+	c, err := New(args)
+	fmt.Printf("error is %v \n", err)
+	fmt.Printf("string is %v", c)
+}
+
+func TestFormat(t *testing.T) {
+	c, err := Parse("+00385915125486x148")
+	fmt.Printf("error is %v \n", err)
+	f := c.format("%A/%f-%l")
+	n := c.format("+ %c (%a) %n")
+	europe := c.format("europe")
+	us := c.format("us")
+	ex := c.format("default_with_extension")
+	fmt.Printf("c is %v \n", c)
+	fmt.Printf("f is %v \n", f)
+	fmt.Printf("n is %v \n", n)
+	fmt.Printf("europe is %v \n", europe)
+	fmt.Printf("us is %v \n", us)
+	fmt.Printf("ex is %v \n", ex)
 }

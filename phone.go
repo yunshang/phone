@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const COMMON_EXTENSIONS = `(ext|ex|x|xt|#|:)+[^0-9]*([-0-9]{1,})*#?$`
@@ -17,7 +18,7 @@ const FORMAT_TOKENS = `(%[caAnflx])`
 
 var namedFormat = map[string]string{
 	"default":                "+%c%a%n",
-	"default_with_extension": "+%c%a%nx%x",
+	"default_with_extension": "+%c%a%n%x",
 	"europe":                 "+%c (0) %a %f %l",
 	"us":                     "(%a) %f-%l",
 }
@@ -54,7 +55,7 @@ func Parse(s string) (*Country, error) {
 	if err != nil {
 		return nil, err
 	}
-	c, err := New(args...)
+	c, err := New(args)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +68,8 @@ func extractExtension(s string) (string, string) {
 	subbed := re.FindString(s)
 	if subbed != "" {
 		re = regexp.MustCompile(COMMON_EXTENSIONS)
-		_s := re.FindString(subbed)
-		return s, _s
+		s = re.ReplaceAllString(s, "")
+		return s, subbed
 	} else {
 		return s, ""
 	}
@@ -104,7 +105,6 @@ func SplitToParts(s string) (args []string, err error) {
 	if format == "" {
 		return nil, err
 	}
-	//sh, _ := c.Formats()
 
 	exp := fmt.Sprintf("%s", c.AreaCode)
 	r, _ := regexp.Compile(exp)
@@ -128,8 +128,8 @@ func (c *Country) ToS() string {
 func (c *Country) Number1() string {
 	data := []byte(c.Number)
 	i, err := strconv.Atoi(c.N1Length)
-	if err == nil {
-		fmt.Printf("i=%d, type: %T\n", i, i)
+	if err != nil {
+		panic(err)
 	}
 	str := string(data[0:i])
 
@@ -138,10 +138,10 @@ func (c *Country) Number1() string {
 func (c *Country) Number2() string {
 	data := []byte(c.Number)
 	i, err := strconv.Atoi(c.N1Length)
-	if err == nil {
-		fmt.Printf("i=%d, type: %T\n", i, i)
+	if err != nil {
+		panic(err)
 	}
-	l := len(data) - i
+	l := len(data) - i - 1
 	str := string(data[l:])
 
 	return str
@@ -170,13 +170,18 @@ func (c *Country) FormatNumber(fm string) string {
 	re := regexp.MustCompile(FORMAT_TOKENS)
 	match := re.FindAllString(fm, -1)
 	fmt.Printf("match is %v \n", match)
-	var s string
 	for _, m := range match {
 		_s := replacements[m]
-		fmt.Printf("sss is %s \n", _s)
-		s = fmt.Sprintf("%s%s", s, _s)
+		fm = strings.Replace(fm, m, _s, 1)
 	}
+	fm = RemoveUselessPlus(fm)
 
+	return fm
+}
+
+func RemoveUselessPlus(s string) string {
+	re := regexp.MustCompile(`^(\+ \+)|^(\+\+)`)
+	s = re.ReplaceAllString(s, "+")
 	return s
 }
 

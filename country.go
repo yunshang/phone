@@ -110,7 +110,7 @@ func (c Country) DetectFormat(stringWithNumber string) string {
 	return arr[0]
 }
 
-func New(args ...string) (input *Country, err error) {
+func New(args []string) (input *Country, err error) {
 	input = ArgsToCountry(args...)
 
 	if strings.Trim(input.Number, "\t \n") == "" {
@@ -121,6 +121,9 @@ func New(args ...string) (input *Country, err error) {
 	}
 	if strings.Trim(input.CountryCode, "\t \n") == "" {
 		err = errors.New("Must enter country code or set default")
+	}
+	if input.N1Length == "" {
+		input.N1Length = "3"
 	}
 
 	return input, err
@@ -138,7 +141,11 @@ func ArgsToCountry(args ...string) *Country {
 		c.Number = args[0]
 		c.AreaCode = args[1]
 		c.CountryCode = args[2]
-		//c.Extension = args[3]
+	case 4:
+		c.Number = args[0]
+		c.AreaCode = args[1]
+		c.CountryCode = args[2]
+		c.Extension = args[3]
 	}
 
 	return c
