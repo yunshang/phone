@@ -1,4 +1,4 @@
-module phoner
+module github/yunshang/phoner
 
 go 1.15
 
